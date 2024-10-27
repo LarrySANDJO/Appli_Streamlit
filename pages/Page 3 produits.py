@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import json
 import numpy as np
-import hashlib
 
 
 st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
