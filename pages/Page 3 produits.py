@@ -38,7 +38,7 @@ def display_image(image_url):
     if not image_url or image_url == "NaN":
         st.info("Ce produit n'a pas d'image.")  
     else:
-        st.image(image_url, width=100)
+        st.image(image_url, width=300)
 
 
 def display_product_info(product):

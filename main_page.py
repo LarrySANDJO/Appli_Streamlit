@@ -3,10 +3,19 @@ import pandas as pd
 import plotly.express as px
 import json
 import numpy as np
+from streamlit_extras.metric_cards import style_metric_cards
 
 
 st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
-st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2: st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL")
+
+#all graphs we use custom css not streamlit 
+theme_plotly = None 
+
+# load Style css
+with open('style.css')as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
 
 st.sidebar.image(
     "images/Auchan-Logo.png",
@@ -35,9 +44,10 @@ df = load_data()
 col1, col2, col3 = st.sidebar.columns([1, 2, 1])
 with col2: st.sidebar.markdown("#   Page principale ")
 
+st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1: st.image("images/Photo2.png", width=1000)
-
+st.markdown("---")
 
 @st.cache_data
 def display_image(image_url):
@@ -62,9 +72,6 @@ def display_product_info(product):
         st.markdown(f"Statut : {product_status}")
 
 
-st.markdown(
-        "<div class='title'>Dashboard des Produits</div>", unsafe_allow_html=True
-    )
 st.markdown("## Vue d'ensemble des produits")
 
 total_products = df["product_id"].nunique()
@@ -73,16 +80,30 @@ total_subcategories = df["subcategory_id"].nunique()
 out_of_stock_products = df[df["is_out_of_stock"] == True].shape[0]
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total de produits", total_products)
-col2.metric("Catégories", total_categories)
-col3.metric("Sous-catégories", total_subcategories)
-col4.metric("En rupture de stock", out_of_stock_products)
+with col1:
+    st.info('Total de produits',icon="💰")
+    st.metric("Total de produits", total_products)
+with col2:
+    st.info('Catégories',icon="💰")
+    st.metric("Catégories", total_categories)
+with col3:
+    st.info('Sous-catégories',icon="💰")
+    st.metric("Sous-catégories", total_subcategories)
+with col4:
+    st.info('En rupture de stock',icon="💰")
+    st.metric("En rupture de stock", out_of_stock_products)
+
+style_metric_cards(background_color="#FFFFFF",border_left_color="#686664",border_color="#000000",box_shadow="#F71938")
+
+st.markdown("---")
 
 max_price_product = df.loc[df['price'].idxmax()]
 min_price_product = df.loc[df['price'].idxmin()]
 
 st.markdown("### Produit le plus cher")
 display_product_info(max_price_product)
+
+st.markdown("---")
 
 st.markdown("### Produit le moins cher")
 display_product_info(min_price_product)
