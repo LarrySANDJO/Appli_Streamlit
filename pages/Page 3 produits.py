@@ -8,11 +8,48 @@ import numpy as np
 st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
 st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL")
 
+#all graphs we use custom css not streamlit 
+theme_plotly = None 
+
+# load Style css
+with open('style.css')as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
+
+# Chargement du css
+with open("bootstrap_style.css") as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+
+# Chargement des composantes bootstrap
+st.markdown("""
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    """, unsafe_allow_html=True)
 
 st.sidebar.image(
     "images/Auchan-Logo.png",
     caption="Dashbord Auchan",
     use_column_width=True
+)
+
+st.markdown(
+    """
+    <style>
+    .text-card {
+        border: 2px solid #4CAF50;  
+        border-radius: 10px;        
+        padding: 20px;              
+        margin: 20px 0;             
+        background-color: #f1f1f1;  
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;          
+    }
+    h4 {
+        color: #4CAF50;  /* Couleur du titre */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 
@@ -40,44 +77,60 @@ def display_image(image_url):
     else:
         st.image(image_url, width=300)
 
-
+@st.cache_data
 def display_product_info(product):
     product_name = product.get("title", "Nom non disponible")
     product_price = product.get("price", "Prix non disponible")
     product_image = product.get("image_url", "")
     product_status = "En rupture de stock" if product.get("is_out_of_stock") else "En stock"
-    
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        display_image(product_image)
-    with col2:
-        st.markdown(f"**{product_name}**")
-        st.markdown(f"Prix : {product_price} CFA")
-        st.markdown(f"Statut : {product_status}")
-    st.markdown("---")
+    st.markdown(
+        """
+        <style>
+        .product-card {
+            border: 1px solid #d1d1d1;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(f"""
+    <div class="product-card">
+        <img src="{product_image}" alt="Image du produit" style="width:100%; height:auto; border-radius: 8px;">
+        <h4>{product_name}</h4>
+        <p style = "font-weight: bold;font-size: 24px;">Prix : {product_price} CFA</p>
+        <p>Statut : {product_status}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
-st.markdown(
-    "<div class='title'>Page des produits</div>", unsafe_allow_html=True
-)
-
+st.markdown("""
+        <div class="dashboard-header animate-fade-in">
+            <h2 style = "text-align: center;font-weight: bold;">Page des produits</h2>
+        </div>
+    """, unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([1, 2, 1])
-with col2: st.sidebar.markdown("# Produits")
+with col2:
+    st.sidebar.markdown("""
+        <div class="dashboard-header animate-fade-in">
+            <h2 style = "text-align: center;font-weight: bold;">Produits</h2>
+        </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("<div class='title'>Filtres des Produits</div>", unsafe_allow_html=True)
 
-
-filter_page = st.radio(
+filter_page = st.sidebar.radio(
     "Choisir un type de filtre",
     ["Filtre par Catégorie", "Filtre par Nom", "Filtre Combiné"],
 )
 
 
 if filter_page == "Filtre par Catégorie":
-    st.markdown("<div class='subtitle'>Produits par Catégorie et Sous-catégorie</div>", unsafe_allow_html=True)
-    
-
+        
     category_options =  df["category"].unique().tolist() + ["Tous"]
     category_filter = st.selectbox(
         "Sélectionnez une catégorie", options=category_options, index=0
@@ -106,28 +159,30 @@ if filter_page == "Filtre par Catégorie":
             (df["subcategory"].isin(subcategory_filter))
         ] 
 
+    
     if not filtered_data.empty:
         x = st.slider("Nombre maximum de produits", value = 15)
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
+        cols_per_row = 4
+        cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
-            st.session_state["i"] += 1
             if  st.session_state["i"] > x:
                 break
-            else:
+            if st.session_state["i"] % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+            col_idx = st.session_state["i"] % cols_per_row
+            with cols[col_idx]:
                 st.write(st.session_state['i'])
                 display_product_info(row)
-                
-                
+            st.session_state["i"] += 1
     else:
         st.info("Aucun produit trouvé.")
 
 
 
-elif filter_page == "Filtre par Nom":
-    st.markdown("<div class='subtitle'>Recherche par Nom de Produit</div>", unsafe_allow_html=True)
-    
+elif filter_page == "Filtre par Nom": 
     search_term = st.text_input("Rechercher un produit par nom", value="")
     
     @st.cache_data
@@ -137,15 +192,27 @@ elif filter_page == "Filtre par Nom":
     filtered_data = search_products(search_term)
 
     if not filtered_data.empty:
+        x = st.slider("Nombre maximum de produits", value = 15)
+        if "i" not in st.session_state:
+            st.session_state['i'] = 0
+        st.session_state['i'] = 0
+        cols_per_row = 4
+        cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
-            display_product_info(row)
+            if  st.session_state["i"] > x:
+                break
+            if st.session_state["i"] % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+            col_idx = st.session_state["i"] % cols_per_row
+            with cols[col_idx]:
+                st.write(st.session_state['i'])
+                display_product_info(row)
+            st.session_state["i"] += 1
     else:
         st.info("Aucun produit trouvé pour cette recherche.")
 
 elif filter_page == "Filtre Combiné":
-    st.markdown("<div class='subtitle'>Filtre Combiné</div>", unsafe_allow_html=True)
     
-
     category_filter = st.selectbox("Sélectionnez une catégorie", options=df["category"].unique(), index=0)
     subcategory_filter = st.multiselect(
         "Sélectionnez une sous-catégorie",
@@ -166,12 +233,61 @@ elif filter_page == "Filtre Combiné":
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
+        cols_per_row = 4
+        cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
-            st.session_state["i"] += 1
             if  st.session_state["i"] > x:
                 break
-            else:
+            if st.session_state["i"] % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+            col_idx = st.session_state["i"] % cols_per_row
+            with cols[col_idx]:
                 st.write(st.session_state['i'])
                 display_product_info(row)
+            st.session_state["i"] += 1
     else:
         st.info("Aucun produit trouvé pour ces filtres combinés.")
+
+st.markdown("""
+        <div class="dashboard-header animate-fade-in">
+            <h3 style = "text-align: center;font-weight: bold;">Produits en promotion</h3>
+        </div>
+    """, unsafe_allow_html=True)
+
+on_promotion = df[df["old_price"] != "Not concerned"]
+if not on_promotion.empty:
+        if "i" not in st.session_state:
+            st.session_state['i'] = 0
+        st.session_state['i'] = 0
+        cols_per_row = 4
+        cols = st.columns(cols_per_row)
+        for index, row in on_promotion.iterrows():
+            if st.session_state["i"] % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+            col_idx = st.session_state["i"] % cols_per_row
+            with cols[col_idx]:
+                st.write(st.session_state['i'])
+                display_product_info(row)
+            st.session_state["i"] += 1
+
+st.markdown("""
+        <div class="dashboard-header animate-fade-in">
+            <h3 style = "text-align: center;font-weight: bold;">Produits en rupture de stock</h3>
+        </div>
+    """, unsafe_allow_html=True)
+out_of_stock_products = df[df["is_out_of_stock"] == True]
+if not out_of_stock_products.empty:
+        if "i" not in st.session_state:
+            st.session_state['i'] = 0
+        st.session_state['i'] = 0
+        cols_per_row = 4
+        cols = st.columns(cols_per_row)
+        for index, row in out_of_stock_products.iterrows():
+            if st.session_state["i"] % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+            col_idx = st.session_state["i"] % cols_per_row
+            with cols[col_idx]:
+                st.write(st.session_state['i'])
+                display_product_info(row)
+            st.session_state["i"] += 1
+
