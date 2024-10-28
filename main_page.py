@@ -3,7 +3,10 @@ import pandas as pd
 import plotly.express as px
 import json
 import numpy as np
+<<<<<<< HEAD
 from streamlit_extras.metric_cards import style_metric_cards
+=======
+>>>>>>> f2f0db5a3c352a8a0df28b01686e46dc671ebbce
 
 
 st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
