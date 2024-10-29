@@ -5,17 +5,22 @@ import json
 import numpy as np
 
 
-st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
-st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL")
+# Page d'acceuil
 
-#all graphs we use custom css not streamlit 
+# Configuration de la page
+st.set_page_config(page_title="Auchan", page_icon="♨️", layout="wide")
+
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2: st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL🔔")
+
+# pas de theme par defaut
 theme_plotly = None 
 
-# load Style css
+# chargement du style css pour les graphiques
 with open('style.css')as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
 
-# Chargement du css
+# Chargement du css pour les textes
 with open("bootstrap_style.css") as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
@@ -26,32 +31,12 @@ st.markdown("""
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     """, unsafe_allow_html=True)
 
+# Logo
 st.sidebar.image(
     "images/Auchan-Logo.png",
     caption="Dashbord Auchan",
     use_column_width=True
 )
-
-st.markdown(
-    """
-    <style>
-    .text-card {
-        border: 2px solid #4CAF50;  
-        border-radius: 10px;        
-        padding: 20px;              
-        margin: 20px 0;             
-        background-color: #f1f1f1;  
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        text-align: center;          
-    }
-    h4 {
-        color: #4CAF50;  /* Couleur du titre */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 
 @st.cache_data
 def load_data():
@@ -114,9 +99,7 @@ st.markdown("""
         </div>
     """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.sidebar.markdown("""
+st.sidebar.markdown("""
         <div class="dashboard-header animate-fade-in">
             <h2 style = "text-align: center;font-weight: bold;">Produits</h2>
         </div>
@@ -128,11 +111,12 @@ filter_page = st.sidebar.radio(
     ["Filtre par Catégorie", "Filtre par Nom", "Filtre Combiné"],
 )
 
+cols_per_row = 6
 
 if filter_page == "Filtre par Catégorie":
         
     category_options =  df["category"].unique().tolist() + ["Tous"]
-    category_filter = st.selectbox(
+    category_filter = st.sidebar.selectbox(
         "Sélectionnez une catégorie", options=category_options, index=0
     )
     
@@ -141,7 +125,7 @@ if filter_page == "Filtre par Catégorie":
     else:
         subcategory_options = df[df["category"] == category_filter]["subcategory"].unique().tolist() + ["Tous"]
 
-    subcategory_filter = st.multiselect(
+    subcategory_filter = st.sidebar.multiselect(
         "Sélectionnez une sous-catégorie",
         options=subcategory_options
     )
@@ -165,7 +149,6 @@ if filter_page == "Filtre par Catégorie":
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
-        cols_per_row = 4
         cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
             if  st.session_state["i"] > x:
@@ -196,7 +179,6 @@ elif filter_page == "Filtre par Nom":
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
-        cols_per_row = 4
         cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
             if  st.session_state["i"] > x:
@@ -233,7 +215,6 @@ elif filter_page == "Filtre Combiné":
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
-        cols_per_row = 4
         cols = st.columns(cols_per_row)
         for index, row in filtered_data.iterrows():
             if  st.session_state["i"] > x:
@@ -259,7 +240,6 @@ if not on_promotion.empty:
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
-        cols_per_row = 4
         cols = st.columns(cols_per_row)
         for index, row in on_promotion.iterrows():
             if st.session_state["i"] % cols_per_row == 0:
@@ -280,7 +260,6 @@ if not out_of_stock_products.empty:
         if "i" not in st.session_state:
             st.session_state['i'] = 0
         st.session_state['i'] = 0
-        cols_per_row = 4
         cols = st.columns(cols_per_row)
         for index, row in out_of_stock_products.iterrows():
             if st.session_state["i"] % cols_per_row == 0:

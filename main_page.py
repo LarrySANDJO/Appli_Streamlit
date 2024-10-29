@@ -5,6 +5,10 @@ import json
 import numpy as np
 from streamlit_extras.metric_cards import style_metric_cards
 
+
+# Page d'acceuil
+
+# Configuration de la page
 st.set_page_config(page_title="Auchan", page_icon="♨️", layout="wide")
 
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -56,9 +60,7 @@ def load_data():
 df = load_data()
 
 # Etiquette de page
-col1, col2, col3 = st.sidebar.columns([1, 2, 1])
-with col2: 
-    st.markdown("""
+st.sidebar.markdown("""
         <div class="dashboard-header animate-fade-in">
             <h1 style = "text-align: center;font-weight: bold;">Page principale</h1>
         </div>
