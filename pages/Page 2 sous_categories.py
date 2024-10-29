@@ -3,11 +3,16 @@ import pandas as pd
 import plotly.express as px
 import json
 import numpy as np
-import hashlib
 
 st.set_page_config(page_title="Auchan", page_icon="🌋", layout="wide")
 st.header("🔔DASHBORD DE SUIVI DES PRIX DE AUCHAN SENEGAL")
-# Création de colonnes pour centrer l'image
+
+#all graphs we use custom css not streamlit 
+theme_plotly = None 
+
+# load Style css
+with open('style.css')as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
 
 st.sidebar.image(
     "images/Auchan-Logo.png",
@@ -15,60 +20,43 @@ st.sidebar.image(
     use_column_width=True
 )
 
-# Charger les données JSON avec mise en cache pour améliorer les performances
+st.markdown(
+    """
+    <style>
+    .text-card {
+        border: 2px solid #4CAF50;  /* Couleur de la bordure */
+        border-radius: 10px;        /* Coins arrondis */
+        padding: 20px;              /* Espacement interne */
+        margin: 20px 0;             /* Espacement externe */
+        background-color: #f1f1f1;  /* Couleur de fond */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre */
+        text-align: center;           /* Alignement du texte */
+    }
+    h4 {
+        color: #4CAF50;  /* Couleur du titre */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 @st.cache_data
 def load_data():
     with open("out_of_stck.json", "r", encoding="utf-8") as f:
         data = json.load(f)
     df = pd.DataFrame(data)
     
-    # Nettoyer les prix et gérer les erreurs de format
     df["price"] = df["price"].str.replace("\u202f", "").str.replace("\xa0CFA", "")
-    df["price"] = pd.to_numeric(df["price"], errors="coerce")  # Convertir en numérique, NaN pour erreurs
+    df["price"] = pd.to_numeric(df["price"], errors="coerce")  
     
-    # Remplacer les valeurs NaN dans is_out_of_stock par False si manquantes
     df["is_out_of_stock"] = df["is_out_of_stock"].fillna(False)
     
-    # Optimiser les colonnes catégorielles
     df["category"] = pd.Categorical(df["category"])
     df["subcategory"] = pd.Categorical(df["subcategory"])
     
     return df
 
-# Chargement des données
 df = load_data()
-
-st.markdown(
-    """
-    <style>
-        .title {
-            font-size: 40px;
-            color: blue;
-            text-align: center;
-            margin-bottom: 20px;
-            bold: True;
-        }
-        .subtitle {
-            font-size: 30px;
-            color: #333;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        .product-card {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .dataframe {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 st.markdown(
     "<div class='title'>Sous-catégories de Produits</div>", unsafe_allow_html=True
@@ -79,21 +67,41 @@ with col2: st.sidebar.markdown("# Sous Categories ")
 
 col1, col2 = st.columns([2, 2])
 
-# Tableau des sous-catégories
-with col1: st.markdown(
-    "<div class='subtitle'>Liste des Sous-catégories</div>", unsafe_allow_html=True
-)
+with col1: 
+    st.markdown(
+    """
+    <div class="text-card">
+        <h1>Liste des Sous-catégories</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
 with col1: st.dataframe(df[["subcategory", "subcategory_id"]].drop_duplicates(), height=300)
 
-# Diagramme circulaire de la répartition des produits dans chaque sous-catégorie
-with col2: st.markdown(
-    "<div class='subtitle'>Répartition des Produits par Sous-catégorie</div>",
-    unsafe_allow_html=True,
-)
-fig = px.pie(
-    df,
+with col2: 
+    st.markdown(
+    """
+    <div class="text-card">
+        <h3>Répartition des Produits par Sous-catégorie</h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
+
+subcategory_options = df["subcategory"].unique().tolist()
+with col2: subcategory_filter = st.multiselect("Selectionner une sous categorie", options=subcategory_options)
+
+filtered_df = df[df["subcategory"].isin(subcategory_filter)]
+if not filtered_df.empty:
+    fig = px.pie(
+    filtered_df,
     names="subcategory",
-    title="Répartition des produits dans les sous-catégories",
-)
-fig.update_layout(title_font_size=24, legend_font_size=16)
-with col2: st.plotly_chart(fig, use_container_width=True)
+    title="Répartition des produits dans les sous-catégories",)
+    fig.update_layout(title_font_size=24, legend_font_size=16)
+    with col2: st.plotly_chart(fig, use_container_width=True)
+else:
+    with col2: st.info("Veuillez sélectionner au moins une catégorie pour afficher le diagramme.")
+    
+
+
+
